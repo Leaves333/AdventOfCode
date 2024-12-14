@@ -1,0 +1,8 @@
+horizontal:
+47
+150
+253
+
+vertical:
+82
+183
