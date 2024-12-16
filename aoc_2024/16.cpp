@@ -87,43 +87,57 @@ int main() {
 
     // count number of cells on the best paths
     set<pii> seen;
-    queue<pii> q;
-    seen.insert(make_pair(1, grid[0].size() - 2));
-    q.push(make_pair(1, grid[0].size() - 2));
+    set<location> visited;
+    queue<location> q;
+
+    for (int i = 0; i < 4; i++) {
+        visited.insert(location(2, grid[0].size() - 2, i));
+        q.push(location(2, grid[i].size() - 2, i));
+    }
 
     while (!q.empty()) {
 
-        int x = q.front().first;
-        int y = q.front().second;
+        auto pos = q.front();
         q.pop();
-        cout << x << ", " << y << endl;
 
-        int min_diff = INT_MAX;
-        vector<pii> adj;
-        for (auto c : changes) {
-            if (grid[x + c[0]][y + c[1]] == '#')
-                continue;
-            int diff =
-                min_dist(x, y, dist) - min_dist(x + c[0], y + c[1], dist);
-            if (diff < 0)
-                continue;
+        seen.insert(make_pair(pos.x, pos.y));
 
-            if (diff < min_diff) {
-                min_diff = diff;
-                adj.clear();
-                adj.push_back(make_pair(x + c[0], y + c[1]));
-            } else if (diff == min_diff) {
-                adj.push_back(make_pair(x + c[0], y + c[1]));
+        // go backwards...
+        auto dir = changes[pos.dir];
+        if (grid[pos.x - dir[0]][pos.y - dir[1]] != '#') {
+            bool decreasing_dist =
+                dist[pos.x - dir[0]][pos.y - dir[1]][pos.dir] <
+                dist[pos.x][pos.y][pos.dir];
+            bool not_visited = !visited.count(
+                location(pos.x - dir[0], pos.y - dir[1], pos.dir));
+
+            auto next_dist = dist[pos.x - dir[0]][pos.y - dir[1]][pos.dir];
+            auto cur_dist = dist[pos.x][pos.y][pos.dir];
+
+            if (decreasing_dist && not_visited) {
+                auto target_location =
+                    location(pos.x - dir[0], pos.y - dir[1], pos.dir);
+                q.push(target_location);
+                visited.insert(target_location);
             }
         }
 
-        for (auto a : adj) {
-            if (!seen.count(a)) {
-                q.push(a);
-                seen.insert(a);
-            }
+        // try to turn...
+        for (int i = (pos.dir + 1) % 2; i < 4; i += 2) {
+            // break if not less than
+            if (dist[pos.x][pos.y][i] >= dist[pos.x][pos.y][pos.dir])
+                continue;
+
+            // break if already visited
+            if (visited.count(location(pos.x, pos.y, i)))
+                continue;
+
+            // add location to queue
+            auto target_location = location(pos.x, pos.y, i);
+            q.push(target_location);
+            visited.insert(target_location);
         }
     }
 
-    cout << "part_2: " << seen.size() << endl;
+    cout << "part_2: " << seen.size() + 1 << endl;
 }
